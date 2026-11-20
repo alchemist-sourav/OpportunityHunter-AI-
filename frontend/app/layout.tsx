@@ -1,0 +1,29 @@
+import type { Metadata } from "next";
+import "./globals.css";
+import SiteHeader from "@/components/layout/site-header";
+import SiteFooter from "@/components/layout/site-footer";
+
+export const metadata: Metadata = {
+  title: {
+    default: "OpportunityHunter AI",
+    template: "%s | OpportunityHunter AI",
+  },
+  description:
+    "OpportunityHunter AI helps you discover grants, jobs, and growth opportunities. Phase 1: application foundation only.",
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <body className="flex min-h-screen flex-col bg-white text-slate-900 antialiased">
+        <SiteHeader />
+        <main className="flex-1">{children}</main>
+        <SiteFooter />
+      </body>
+    </html>
+  );
+}

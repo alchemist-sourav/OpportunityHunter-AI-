@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { startDiscoverySearch, getDiscoveryJob, cancelDiscoveryJob, getDiscoveryHistory } from '@/lib/discovery';
-import { fetchOpportunities, extractFromDiscoveryJob, verifyOpportunity } from '@/lib/opportunity';
+import { extractFromDiscoveryJob, batchVerifyOpportunities } from '@/lib/opportunity';
 import type { DiscoveryJob, DiscoverySearchRequest, DiscoveryHistoryResponse } from '@/types';
 import { DiscoveryForm, DiscoveryStatus, DiscoveryResults, DiscoveryHistory } from '@/components/discovery';
 import { OpportunityList } from '@/components/opportunity';
@@ -23,6 +23,10 @@ export default function OpportunitiesPage() {
   const [selectedOpportunity, setSelectedOpportunity] = useState<string | null>(null);
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractError, setExtractError] = useState<string | null>(null);
+  const [extractedOpportunityIds, setExtractedOpportunityIds] = useState<string[]>([]);
+  const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => { if (pollTimer.current) clearTimeout(pollTimer.current); }, []);
 
   const loadHistory = useCallback(async () => {
     try {
@@ -68,7 +72,7 @@ export default function OpportunitiesPage() {
         setCurrentJob(job);
         
         if (job.status === 'running' || job.status === 'pending') {
-          setTimeout(poll, 3000);
+          pollTimer.current = setTimeout(poll, 3000);
         } else {
           setIsPolling(false);
           loadHistory();
@@ -94,6 +98,7 @@ export default function OpportunitiesPage() {
       if (result.errors.length > 0) {
         setExtractError(result.errors.join('; '));
       }
+      setExtractedOpportunityIds([...result.created, ...result.updated]);
       setShowOpportunities(true);
     } catch (err) {
       setExtractError(err instanceof Error ? err.message : 'Failed to extract opportunities');
@@ -169,7 +174,7 @@ export default function OpportunitiesPage() {
             </button>
             <button
               onClick={handleVerify}
-              disabled={!currentJob.results?.length}
+              disabled={extractedOpportunityIds.length === 0}
               className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Verify Opportunities

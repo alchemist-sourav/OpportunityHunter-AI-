@@ -76,9 +76,6 @@ pip install -r backend/requirements.txt
 
 # 3. Run migrations online (connects to DB with URL from .env)
 cd backend
-alectric upgrade  # or: alembic upgrade head
-
-# Equivalent alembic command:
 alembic upgrade head
 ```
 
@@ -286,3 +283,37 @@ The migration chain is strictly linear. Do not skip or reorder migrations. Each 
 - Production `CORS_ORIGINS` configured
 
 ---
+
+## Vercel + Render Deployment
+
+The repository now includes `frontend/vercel.json` and a root `render.yaml` blueprint.
+
+### Vercel (frontend)
+
+1. Import this GitHub repository into Vercel.
+2. Set the **Root Directory** to `frontend`.
+3. Add these environment variables:
+   - `NEXT_PUBLIC_API_URL`: the public Render API origin, without a trailing slash.
+   - `NEXT_PUBLIC_SUPABASE_URL`: your Supabase project URL.
+   - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: your Supabase publishable/anon key.
+4. Add your Vercel production and preview URLs to Supabase Auth's allowed redirect URLs.
+5. Deploy the feature branch as a preview first. Promote only after CI and the smoke tests pass.
+
+### Render (FastAPI backend)
+
+1. In Render, create a Blueprint deployment using the repository root `render.yaml`.
+2. Set the secret environment variables in the Render dashboard:
+   - `DATABASE_URL`: PostgreSQL connection string using the SQLAlchemy-compatible `postgresql+psycopg2://` scheme.
+   - `CORS_ORIGINS`: exact Vercel production origin(s), comma-separated.
+   - `SUPABASE_URL`, `SUPABASE_JWT_SECRET`, and `SUPABASE_JWT_ISSUER`.
+   - `FIRECRAWL_ENCRYPTION_KEY`: generate with `openssl rand -hex 32`.
+3. Apply the Alembic migrations before accepting traffic. The Blueprint build command runs `alembic upgrade head`; verify the migration logs before going live.
+4. Confirm `GET /api/v1/health` returns healthy status and that CORS permits the deployed frontend origin.
+
+### Important authentication compatibility note
+
+The backend currently validates Supabase access tokens using the legacy HS256 JWT secret. Confirm that the Supabase project issues HS256 tokens and that `SUPABASE_JWT_SECRET` matches the project's JWT secret. Projects using asymmetric signing keys (for example ES256) require backend JWKS-based verification before production rollout; do not weaken signature verification or disable JWT checks to work around this.
+
+### CI
+
+The workflow at `.github/workflows/ci.yml` runs backend pytest, frontend TypeScript checks, and a Next.js production build on pushes to the feature branch and on pull requests. Treat a green workflow as a prerequisite for merging. CI results must be reviewed in GitHub Actions; they are not implied by a successful commit.

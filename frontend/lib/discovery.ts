@@ -2,13 +2,6 @@ import type { DiscoverySearchRequest, DiscoveryJob, DiscoveryHistoryResponse, Di
 import { API_BASE_URL } from './api';
 import { authenticatedFetch } from './supabase-auth';
 
-function getAuthHeader(): Record<string, string> {
-  // In a real app, this would come from Supabase auth session
-  // For now, we'll use a stored token or environment variable
-  const token = typeof window !== 'undefined' ? localStorage.getItem('supabase_access_token') : null;
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
 async function fetchWithAuth<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const response = await authenticatedFetch(`${API_BASE_URL}/api/v1${endpoint}`, {
     ...options,

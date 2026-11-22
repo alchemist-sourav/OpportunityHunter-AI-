@@ -1,4 +1,5 @@
 import type { ApplicationListResponse, ApplicationListItem } from '@/types';
+import { authenticatedFetch } from '@/lib/supabase-auth';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -15,7 +16,7 @@ export async function fetchApplications(params: {
   if (params.offset !== undefined) {
     searchParams.append('offset', String(params.offset));
   }
-  const response = await fetch(`${API_BASE_URL}/api/v1/applications?${searchParams.toString()}`, {
+  const response = await authenticatedFetch(`${API_BASE_URL}/api/v1/applications?${searchParams.toString()}`, {
     credentials: "include",
     headers: {
       'Content-Type': 'application/json',

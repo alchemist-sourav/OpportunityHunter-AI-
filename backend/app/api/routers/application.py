@@ -15,6 +15,8 @@ from app.schemas.application import (
     ApplicationStatus,
 )
 from app.services import application_service
+from app.models.opportunity_models import Opportunity
+from app.schemas.application import ApplicationOpportunitySummary
 
 router = APIRouter(prefix="/applications", tags=["applications"])
 
@@ -77,6 +79,19 @@ def list_applications(
                 deadline=item.deadline,
                 notes=item.notes,
                 created_at=item.created_at,
+                opportunity=(
+                    ApplicationOpportunitySummary(
+                        id=opportunity.id,
+                        title=opportunity.title,
+                        company_name=opportunity.company_name,
+                        opportunity_type=opportunity.opportunity_type.value if opportunity.opportunity_type else None,
+                        location=opportunity.location,
+                        remote_preference=opportunity.remote_preference.value if hasattr(opportunity.remote_preference, "value") else opportunity.remote_preference,
+                        verification_status=opportunity.verification_status.value if hasattr(opportunity.verification_status, "value") else opportunity.verification_status,
+                        source_domain=opportunity.source_domain,
+                    )
+                    if (opportunity := session.get(Opportunity, item.opportunity_id)) else None
+                ),
             )
             for item in result["items"]
         ],

@@ -11,6 +11,7 @@ export default function ApplicationTracker() {
   const [applications, setApplications] = useState<ApplicationListItem[]>([]);
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingApplication, setEditingApplication] = useState<ApplicationListItem | null>(null);
@@ -40,6 +41,20 @@ export default function ApplicationTracker() {
   useEffect(() => {
     loadApplications();
   }, [loadApplications]);
+
+  const loadMore = async () => {
+    if (isLoadingMore || applications.length >= total) return;
+    setIsLoadingMore(true);
+    try {
+      const data = await fetchApplications({ limit: 50, offset: applications.length });
+      setApplications(prev => [...prev, ...data.items]);
+      setTotal(data.total);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load more applications');
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
 
   const handleStatusChange = async (applicationId: string, newStatus: ApplicationStatus) => {
     try {
@@ -100,27 +115,15 @@ export default function ApplicationTracker() {
           {applications.map((app) => (
             <ApplicationCard
               key={app.id}
-              application={{
-                ...app,
-                opportunity: {
-                  id: app.opportunity_id,
-                  title: '',
-                  company_name: '',
-                  opportunity_type: '',
-                  location: '',
-                  remote_preference: '',
-                  verification_status: 'unverified',
-                  source_domain: '',
-                },
-              }}
+              application={app}
               onStatusChange={(newStatus) => handleStatusChange(app.id, newStatus)}
               onDelete={() => setDeleteId(app.id)}
             />
           ))}
           {(applications.length < total || isLoading) && (
             <div className="mt-4 text-center">
-              <Button disabled={isLoading} variant="secondary">
-                {isLoading ? 'Loading...' : 'Load More'}
+              <Button onClick={loadMore} disabled={isLoadingMore} variant="secondary">
+                {isLoadingMore ? 'Loading...' : 'Load More'}
               </Button>
             </div>
           )}

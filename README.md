@@ -3,12 +3,12 @@
 OpportunityHunter AI helps you discover grants, jobs, and growth opportunities that match your
 goals — privately, with your own API key, on a free-tier-friendly stack.
 
-> **Current status: Phase 3 — Firecrawl integration & opportunity discovery.** The FastAPI backend,
-> database layer, structured logging with secret redaction, Alembic migrations, Supabase Auth,
-> per-user encrypted Firecrawl credentials, Firecrawl-powered discovery pipeline, and the Next.js
-> frontend with discovery interface are in place.
-> **Authentication, credential storage, and opportunity discovery are operational.** See
-> [Security](#security) and [Roadmap](#roadmap).
+> **Current status: production-hardening in progress.** The repository includes the FastAPI backend,
+> Supabase JWT verification, encrypted per-user Firecrawl credential storage, Firecrawl discovery,
+> opportunity extraction and matching, application tracking, and a Next.js frontend. The feature branch
+> adds Supabase Auth UI/session handling, authenticated API clients, profile and credential settings,
+> opportunity ownership checks, and deployment/CI configuration. External credentials and CI verification
+> are still required before production use. See [Deployment](docs/DEPLOYMENT.md).
 
 ## Architecture
 
@@ -85,12 +85,13 @@ Run tests:
 python -m pytest
 ```
 
-Run migrations (only when `DATABASE_URL` is set):
+Run existing migrations (only when `DATABASE_URL` is set):
 
 ```bash
-alembic revision --autogenerate -m "init"
 alembic upgrade head
 ```
+
+Do not generate a new migration unless the SQLAlchemy models have changed and the migration has been reviewed.
 
 ### Frontend
 
@@ -157,3 +158,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.
 ## License
 
 Apache-2.0 — see [LICENSE](LICENSE).
+
+## Deployment
+
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for the Vercel frontend, Render backend, Supabase configuration, migrations, and production smoke-test checklist.

@@ -34,7 +34,7 @@ def toggle_opportunity_public(
     is_public: bool = Body(..., description="Set is_public status for the opportunity"),
 ) -> OpportunityListItem:
     """Toggle whether an opportunity is publicly visible."""
-    from app.models.opportunity_models import Opportunity
+    from app.models.opportunity_models import Opportunity, OpportunitySource
 
     opportunity = session.get(Opportunity, opportunity_id)
     if not opportunity:
@@ -89,10 +89,15 @@ def list_opportunities(
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
 ) -> dict[str, object]:
-    stmt = select(OpportunityListItem.__annotations__['id'].comparator).select_from(OpportunityListItem)
-    from app.models.opportunity_models import Opportunity
+    from app.models.opportunity_models import Opportunity, OpportunitySource
 
     stmt = select(Opportunity).options(selectinload(Opportunity.sources))
+    owned_opportunity_ids = select(OpportunitySource.opportunity_id).where(
+        OpportunitySource.user_id == user.user_id
+    )
+    stmt = stmt.where(
+        (Opportunity.is_public.is_(True)) | (Opportunity.id.in_(owned_opportunity_ids))
+    )
 
     if category:
         stmt = stmt.where(Opportunity.opportunity_type == category)
@@ -155,7 +160,7 @@ def get_opportunity(
     user: AuthenticatedUser,
     session: Session,
 ) -> OpportunityResponse:
-    from app.models.opportunity_models import Opportunity
+    from app.models.opportunity_models import Opportunity, OpportunitySource
     stmt = select(Opportunity).options(selectinload(Opportunity.sources)).where(Opportunity.id == opportunity_id)
     opportunity = session.scalar(stmt)
     if not opportunity:
@@ -163,8 +168,13 @@ def get_opportunity(
         raise AppException("Opportunity not found", status_code=404, error_code="opportunity_not_found")
 
     if not opportunity.is_public:
-        from app.core.exceptions import ForbiddenError
-        raise ForbiddenError("Access denied")
+        owned = session.scalar(select(OpportunitySource.id).where(
+            OpportunitySource.opportunity_id == opportunity_id,
+            OpportunitySource.user_id == user.user_id,
+        ))
+        if not owned:
+            from app.core.exceptions import ForbiddenError
+            raise ForbiddenError("Access denied")
 
     return OpportunityResponse.from_attributes(opportunity)
 
@@ -204,8 +214,13 @@ async def verify_opportunity(
         raise AppException("Opportunity not found", status_code=404, error_code="opportunity_not_found")
 
     if not opportunity.is_public:
-        from app.core.exceptions import ForbiddenError
-        raise ForbiddenError("Access denied")
+        owned = session.scalar(select(OpportunitySource.id).where(
+            OpportunitySource.opportunity_id == opportunity_id,
+            OpportunitySource.user_id == user.user_id,
+        ))
+        if not owned:
+            from app.core.exceptions import ForbiddenError
+            raise ForbiddenError("Access denied")
 
     verified_opp = await eo.VerificationOrchestrator(session_factory=lambda: session).verify_opportunity(opportunity_id)
     if verified_opp:
@@ -227,12 +242,24 @@ async def batch_verify_opportunities(
     session: Session,
 ) -> OpportunityVerifyResponse:
     from app.services import extraction_orchestrator as eo
+    from app.models.opportunity_models import Opportunity, OpportunitySource
 
     opp_ids = payload.opportunity_ids
     if not opp_ids:
-        from app.models.opportunity_models import Opportunity
-        stmt = select(Opportunity.id).where(Opportunity.verification_status == "unverified").limit(50)
+        owned_ids = select(OpportunitySource.opportunity_id).where(OpportunitySource.user_id == user.user_id)
+        stmt = select(Opportunity.id).where(
+            Opportunity.verification_status == "unverified",
+            (Opportunity.is_public.is_(True)) | (Opportunity.id.in_(owned_ids)),
+        ).limit(50)
         opp_ids = [str(row[0]) for row in session.execute(stmt).all()]
+
+    if opp_ids:
+        owned_ids = select(OpportunitySource.opportunity_id).where(OpportunitySource.user_id == user.user_id)
+        allowed_ids = set(session.scalars(select(Opportunity.id).where(
+            Opportunity.id.in_(opp_ids),
+            (Opportunity.is_public.is_(True)) | (Opportunity.id.in_(owned_ids)),
+        )).all())
+        opp_ids = [opportunity_id for opportunity_id in opp_ids if opportunity_id in allowed_ids]
 
     verified = await eo.VerificationOrchestrator(session_factory=lambda: session).batch_verify(opp_ids)
     return OpportunityVerifyResponse(

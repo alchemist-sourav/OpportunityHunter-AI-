@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import AuthGate from '@/components/auth/auth-gate';
 import { startDiscoverySearch, getDiscoveryJob, cancelDiscoveryJob, getDiscoveryHistory } from '@/lib/discovery';
 import { extractFromDiscoveryJob, batchVerifyOpportunities } from '@/lib/opportunity';
 import type { DiscoveryJob, DiscoverySearchRequest, DiscoveryHistoryResponse } from '@/types';
@@ -264,6 +265,7 @@ export default function OpportunitiesPage() {
   );
 
   return (
+    <AuthGate>
     <div className="max-w-7xl mx-auto space-y-6">
       <div>
         <div className="flex items-center justify-between mb-4">
@@ -337,5 +339,6 @@ export default function OpportunitiesPage() {
     </div>
   )}
 </div>
+    </AuthGate>
   );
 }

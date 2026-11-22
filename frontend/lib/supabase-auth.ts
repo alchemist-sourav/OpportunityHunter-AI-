@@ -3,6 +3,7 @@ type SupabaseAuthResponse = {
   refresh_token?: string;
   token_type?: string;
   expires_in?: number;
+  expires_at?: number;
   user?: { id: string; email?: string; user_metadata?: Record<string, unknown> };
   msg?: string;
   message?: string;
@@ -30,7 +31,8 @@ function readSession(): SupabaseAuthResponse | null {
 function writeSession(session: SupabaseAuthResponse | null) {
   if (typeof window === "undefined") return;
   if (session?.access_token && session.refresh_token) {
-    window.sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    const stored = { ...session, expires_at: session.expires_at ?? Math.floor(Date.now() / 1000) + (session.expires_in ?? 3600) };
+    window.sessionStorage.setItem(SESSION_KEY, JSON.stringify(stored));
   } else {
     window.sessionStorage.removeItem(SESSION_KEY);
   }

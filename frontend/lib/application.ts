@@ -33,7 +33,7 @@ export async function fetchApplications(params: {
 }
 
 export async function fetchApplication(opportunityId: string): Promise<ApplicationListItem> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/applications/${opportunityId}`, {
+  const response = await authenticatedFetch(`${API_BASE_URL}/api/v1/applications/${opportunityId}`, {
     credentials: "include",
     headers: {
       'Content-Type': 'application/json',
@@ -53,7 +53,7 @@ export async function updateApplicationStatus(
   applicationId: string,
   status: string
 ): Promise<ApplicationListItem> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/applications/${applicationId}`, {
+  const response = await authenticatedFetch(`${API_BASE_URL}/api/v1/applications/${applicationId}`, {
     method: 'PATCH',
     credentials: "include",
     headers: {

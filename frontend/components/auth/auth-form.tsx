@@ -30,6 +30,7 @@ export default function AuthForm({ mode }: Props) {
       } else {
         await signInWithPassword(email.trim(), password);
       }
+      window.dispatchEvent(new Event("opportunity-hunter-auth-change"));
       router.replace("/dashboard");
       router.refresh();
     } catch (err) {

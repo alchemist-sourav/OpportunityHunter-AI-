@@ -5,6 +5,7 @@ import type {
   MatchingRecalculateResponse,
 } from '@/types';
 import { API_BASE_URL } from './api';
+import { authenticatedFetch } from './supabase-auth';
 
 function getAuthHeader(): Record<string, string> {
   const token = typeof window !== 'undefined' ? localStorage.getItem('supabase_access_token') : null;
@@ -12,11 +13,10 @@ function getAuthHeader(): Record<string, string> {
 }
 
 async function fetchWithAuth<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}/api/v1${endpoint}`, {
+  const response = await authenticatedFetch(`${API_BASE_URL}/api/v1${endpoint}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...getAuthHeader(),
       ...options.headers,
     },
     cache: 'no-store',

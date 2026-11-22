@@ -6,7 +6,7 @@ import Card from '@/components/ui/card';
 import Button from '@/components/shared/button';
 
 interface ApplicationCardProps {
-  application: ApplicationListItem & { opportunity: OpportunitySummary };
+  application: ApplicationListItem;
   onStatusChange?: (status: ApplicationStatus) => void;
   onDelete?: () => void;
 }

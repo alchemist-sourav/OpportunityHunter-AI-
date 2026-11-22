@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { getAccessToken, signOut } from "@/lib/supabase-auth";
 
 const navLinks = [
   { href: "/dashboard", label: "Dashboard" },
@@ -12,6 +14,22 @@ const navLinks = [
 
 export default function SiteHeader() {
   const [open, setOpen] = useState(false);
+  const [authenticated, setAuthenticated] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    const sync = () => { getAccessToken().then(token => setAuthenticated(Boolean(token))).catch(() => setAuthenticated(false)); };
+    sync();
+    window.addEventListener("opportunity-hunter-auth-change", sync);
+    return () => window.removeEventListener("opportunity-hunter-auth-change", sync);
+  }, []);
+
+  async function handleSignOut() {
+    await signOut();
+    setAuthenticated(false);
+    window.dispatchEvent(new Event("opportunity-hunter-auth-change"));
+    router.replace("/login");
+  }
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur">
@@ -25,12 +43,14 @@ export default function SiteHeader() {
               {link.label}
             </Link>
           ))}
-          <Link
-            href="/login"
-            className="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700"
-          >
-            Log in
-          </Link>
+          {authenticated ? (
+            <>
+              <Link href="/dashboard" className="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700">Open workspace</Link>
+              <button type="button" onClick={handleSignOut} className="text-sm font-medium text-slate-600 hover:text-rose-600">Sign out</button>
+            </>
+          ) : (
+            <Link href="/login" className="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700">Log in</Link>
+          )}
         </nav>
         <button
           type="button"
@@ -57,13 +77,11 @@ export default function SiteHeader() {
               </li>
             ))}
             <li>
-              <Link
-                href="/login"
-                onClick={() => setOpen(false)}
-                className="block rounded-lg px-3 py-2 text-sm font-medium text-indigo-600 hover:bg-slate-50"
-              >
-                Log in
-              </Link>
+              {authenticated ? (
+                <button type="button" onClick={handleSignOut} className="block w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-rose-600 hover:bg-slate-50">Sign out</button>
+              ) : (
+                <Link href="/login" onClick={() => setOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium text-indigo-600 hover:bg-slate-50">Log in</Link>
+              )}
             </li>
           </ul>
         </nav>

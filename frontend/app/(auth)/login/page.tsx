@@ -1,14 +1,5 @@
-import AuthPlaceholder from "@/components/auth/auth-placeholder";
+import AuthForm from "@/components/auth/auth-form";
 
 export default function LoginPage() {
-  return (
-    <AuthPlaceholder
-      heading="Log in"
-      action="Log in"
-      fields={[
-        { label: "Email", type: "email" },
-        { label: "Password", type: "password" },
-      ]}
-    />
-  );
+  return <AuthForm mode="login" />;
 }

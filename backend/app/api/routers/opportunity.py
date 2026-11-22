@@ -206,7 +206,7 @@ async def verify_opportunity(
     session: Session,
 ) -> OpportunityVerifyResponse:
     from app.services import extraction_orchestrator as eo
-    from app.models.opportunity_models import Opportunity
+    from app.models.opportunity_models import Opportunity, OpportunitySource
 
     opportunity = session.get(Opportunity, opportunity_id)
     if not opportunity:
@@ -282,8 +282,13 @@ def get_opportunity_sources(
         raise AppException("Opportunity not found", status_code=404, error_code="opportunity_not_found")
 
     if not opportunity.is_public:
-        from app.core.exceptions import ForbiddenError
-        raise ForbiddenError("Access denied")
+        owned = session.scalar(select(OpportunitySource.id).where(
+            OpportunitySource.opportunity_id == opportunity_id,
+            OpportunitySource.user_id == user.user_id,
+        ))
+        if not owned:
+            from app.core.exceptions import ForbiddenError
+            raise ForbiddenError("Access denied")
 
     sources = session.scalars(
         select(OpportunitySource).where(OpportunitySource.opportunity_id == opportunity_id)

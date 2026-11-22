@@ -43,6 +43,17 @@ class ApplicationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class ApplicationOpportunitySummary(BaseModel):
+    id: str
+    title: str | None
+    company_name: str | None
+    opportunity_type: str | None
+    location: str | None
+    remote_preference: str | None
+    verification_status: str
+    source_domain: str
+
+
 class ApplicationListItem(BaseModel):
     id: str
     opportunity_id: str
@@ -51,6 +62,7 @@ class ApplicationListItem(BaseModel):
     deadline: datetime | None
     notes: str | None
     created_at: datetime
+    opportunity: ApplicationOpportunitySummary | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

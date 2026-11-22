@@ -72,15 +72,18 @@ export async function signUp(email: string, password: string, fullName: string) 
 
 export async function signOut() {
   const token = readSession()?.access_token;
-  if (token) {
-    const { url, key } = config();
-    await fetch(`${url}/auth/v1/logout`, {
-      method: "POST",
-      headers: { apikey: key, Authorization: `Bearer ${token}` },
-      cache: "no-store",
-    });
+  try {
+    if (token) {
+      const { url, key } = config();
+      await fetch(`${url}/auth/v1/logout`, {
+        method: "POST",
+        headers: { apikey: key, Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      });
+    }
+  } finally {
+    writeSession(null);
   }
-  writeSession(null);
 }
 
 export async function getAccessToken(): Promise<string | null> {

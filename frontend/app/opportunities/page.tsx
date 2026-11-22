@@ -108,11 +108,16 @@ export default function OpportunitiesPage() {
   };
 
   const handleVerify = async () => {
-    if (!currentJob) return;
+    if (extractedOpportunityIds.length === 0) {
+      setExtractError('Extract opportunities before verifying them.');
+      return;
+    }
     try {
-      await verifyOpportunity(currentJob.id);
+      const result = await batchVerifyOpportunities({ opportunity_ids: extractedOpportunityIds });
+      if (result.errors.length > 0) setExtractError(result.errors.join('; '));
+      else setExtractError(null);
     } catch (err) {
-      console.error('Verification failed:', err);
+      setExtractError(err instanceof Error ? err.message : 'Verification failed');
     }
   };
 

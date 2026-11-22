@@ -14,7 +14,7 @@ class ApplicationRepository:
     def create(self, user_id: str, opportunity_id: str, status: str = "interested",
                notes: str | None = None, deadline: datetime | None = None) -> UserApplication:
         application = UserApplication(
-            id=str(uuid4()),
+            id=str(uuid.uuid4()),
             user_id=user_id,
             opportunity_id=opportunity_id,
             status=status,

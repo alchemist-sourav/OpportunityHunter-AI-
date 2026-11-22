@@ -1,18 +1,18 @@
 'use client';
 
+import AuthGate from '@/components/auth/auth-gate';
 import ApplicationTracker from '@/components/application/ApplicationList';
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
-        <p className="text-slate-600 mt-1">
-          Your personal opportunity overview
-        </p>
+    <AuthGate>
+      <div className="space-y-6 px-4 py-8">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
+          <p className="mt-1 text-slate-600">Your personal opportunity overview</p>
+        </div>
+        <ApplicationTracker />
       </div>
-
-      <ApplicationTracker />
-    </div>
+    </AuthGate>
   );
 }

@@ -34,6 +34,7 @@ export default function ApplicationTracker() {
       setTotal(data.total);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load applications');
+    } finally {
       setIsLoading(false);
     }
   }, []);

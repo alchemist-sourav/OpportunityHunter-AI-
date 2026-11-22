@@ -38,7 +38,7 @@ export interface ApplicationListItem {
   deadline: string | null;
   notes: string | null;
   created_at: string;
-  opportunity: OpportunitySummary;
+  opportunity: OpportunitySummary | null;
 }
 
 export interface ApplicationListResponse {
